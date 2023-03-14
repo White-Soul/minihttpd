@@ -1,0 +1,6 @@
+*.a
+*.def
+*.dll
+*.lib
+.vscode
+build
