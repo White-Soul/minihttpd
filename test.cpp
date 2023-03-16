@@ -11,7 +11,7 @@ int main()
         {"/login", new LoginServlet(server)},
         {"/register", new RegisterServlet(server)},
         {"/assets", new AssetServlet(server)},
-        {"/Users", new UsersServlet(server)},
+        {"/users", new UsersServlet(server)},
         {"/addUser", new AddUserServlet(server)},
         {"/deleteUser", new DeleteUserServlet(server)},
         {"/addAsset", new AddAssetServlet(server)},

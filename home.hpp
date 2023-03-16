@@ -182,7 +182,11 @@ public:
         {
             auto result = conn->getDefaultSchema().getTable("user").select("*").execute();
             std::string body = rowResult_to_json(result);
-            response.add_body(body);
+            Result res;
+            res.set_Result_Code(Result_Code::OK_);
+            res.set_Message("请求成功");
+            res.set_Data(body);
+            response.add_body(result_to_json(res));
         }
         catch (const mysqlx::Error &e)
         {
@@ -210,6 +214,22 @@ public:
         auto body = request.get_body();
         User u = json_to_obj<User>(body);
         std::string sql = "select * from asset where (user_account = '" + u.account + "');";
+        Result res;
+        auto conn = server_.getConnPool()->getConnection();
+        try
+        {
+            auto result = conn->sql(sql).execute();
+            std::string body = rowResult_to_json(result);
+            res.set_Data(body);
+            response.add_body(result_to_json(res));
+            res.set_Result_Code(Result_Code::OK_);
+            res.set_Message("请求成功");
+        }catch (const mysqlx::Error &e)
+        {
+            std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+            res.set_Result_Code(Result_Code::ERROR_);
+            res.set_Message("请求失败");
+        }
     }
 };
 // 添加用户
@@ -402,15 +422,20 @@ public:
 };
 // 获取类型
 class TypeServlet : public HttpServlet
-{public:
-    void doGet(HttpServletRequest& request, HttpServletResponse& response){
+{
+public:
+    void doGet(HttpServletRequest &request, HttpServletResponse &response)
+    {
         std::string sql = "select * from type";
         auto conn = server_.getConnPool()->getConnection();
-        try{
+        try
+        {
             auto res = conn->sql(sql).execute();
             auto body = rowResult_to_json(res);
             response.add_body(body);
-        }catch(const mysqlx::Error& e){
+        }
+        catch (const mysqlx::Error &e)
+        {
             server_.getConnPool()->releaseConnection(conn);
             std::cerr << e.what() << std::endl;
         }
@@ -419,9 +444,9 @@ class TypeServlet : public HttpServlet
         response.set_content_type("application/json");
         response.send();
     }
-    void doPost(HttpServletRequest& request, HttpServletResponse& response){
-
+    void doPost(HttpServletRequest &request, HttpServletResponse &response)
+    {
     }
 
-    TypeServlet(HttpServer& ser) : HttpServlet(ser){}
+    TypeServlet(HttpServer &ser) : HttpServlet(ser) {}
 };

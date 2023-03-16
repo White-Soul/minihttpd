@@ -51,7 +51,8 @@ public:
                   const std::string &password, const std::string &database,
                   unsigned int port = 33060, unsigned int pool_size = 128)
     {
-        conn_pool = std::make_shared<ConnectionPool>(new ConnectionPool(host, user, password, database, port, pool_size));
+        std::cout << "绑定数据库" << std::endl;
+        conn_pool = std::make_shared<ConnectionPool>(host, user, password, database, port, pool_size);
     }
     std::shared_ptr<ConnectionPool> getConnPool()
     {

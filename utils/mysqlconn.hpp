@@ -9,14 +9,16 @@ class ConnectionPool
 public:
     ConnectionPool(const std::string &host, const std::string &user,
                    const std::string &password, const std::string &database,
-                   unsigned int port = 33060, unsigned int pool_size = 128)
+                   unsigned int port = 33060, unsigned int pool_size = 32)
         : host_(host), user_(user), password_(password), database_(database),
           port_(port), pool_size_(pool_size), count_(0)
     {
+        if(pool_size_ > 32) pool_size_ = 32;
         for (unsigned int i = 0; i < pool_size_; ++i)
         {
             connections_.emplace(createConnection());
         }
+        std::cout << "数据库初始化" << std::endl;
     }
 
     ConnectionPool()

@@ -5,7 +5,9 @@
 #include <mysqlx/xdevapi.h>
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
+#include <type_traits>
 #include "Result.hpp"
+#include "Interface.hpp"
 /**
  * 将 mysqlx::Value 转为 string
  */
@@ -139,33 +141,60 @@ const boost::json::object &body_to_obj(const std::string &body)
  * 获取 boost::json::object 的内容
  * 若失败则返回T的默认构造对象
  */
-template <class T>
-T getObjValue(const boost::json::object &obj, const std::string &str)
+// 定义访问 string 类型成员的模板函数
+template <typename T>
+typename std::enable_if<std::is_same<T, std::string>::value, T>::type
+get_member_impl(const boost::json::object& obj, const std::string& key)
 {
-    try
-    {
-        const auto &value = obj.at(str);
-        return value.is_string() ? value.as_string() : value.as_int64();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return T();
-    }
+    return std::string(obj.at(key).as_string().data(),obj.at(key).as_string().size());
+}
+
+// 定义访问 int64_t 类型成员的模板函数
+template <typename T>
+typename std::enable_if<std::is_same<T, int64_t>::value, T>::type
+get_member_impl(const boost::json::object& obj, const std::string& key)
+{
+    return obj.at(key).as_int64();
+}
+
+// 定义通用的 JSON 对象成员访问函数
+template <typename T>
+T getObjValue(const boost::json::object& obj, const std::string& key)
+{
+    return get_member_impl<T>(obj, key);
 }
 /**
  * 获取 boost::json::object 的数组内容
 */
-template <class T>
-std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &str) {
-    const boost::json::array &arr = obj.at(str).as_array();
+
+// 定义访问 string 类型元素的模板函数
+template <typename T>
+typename std::enable_if<std::is_same<T, std::string>::value, T>::type
+get_array_elem_impl(const boost::json::value& elem)
+{
+    return std::string(elem.as_string().data(), elem.as_string().size());
+}
+
+// 定义访问 int64_t 类型元素的模板函数
+template <typename T>
+typename std::enable_if<std::is_same<T, int64_t>::value, T>::type
+get_array_elem_impl(const boost::json::value& elem)
+{
+    return elem.as_int64();
+}
+
+// 定义通用的 JSON 对象数组元素访问函数
+template <typename T>
+std::vector<T> getArrayValue(const boost::json::object& obj, const std::string& key)
+{
     std::vector<T> result;
-    for (const auto &elem : arr) {
-        try {
-            result.push_back(elem.is_string() ? elem.as_string() : elem.as_int64());
-        } catch (const std::exception &e) {
-            std::cerr << "Error: " << e.what() << std::endl;
+    try {
+        const boost::json::array& arr = obj.at(key).as_array();
+        for (const auto& elem : arr) {
+            result.push_back(get_array_elem_impl<T>(elem));
         }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
     return result;
 }

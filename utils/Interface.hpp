@@ -79,32 +79,28 @@ protected:
 
 public:
     virtual ~HttpServlet() {}
-    HttpServlet(HttpServer & ser) : server_(ser) {}
+    HttpServlet(HttpServer &ser) : server_(ser) {}
     // HttpServlet(HttpServlet &ser) = delete;
     virtual void doGet(HttpServletRequest &request, HttpServletResponse &response) = 0;
     virtual void doPost(HttpServletRequest &request, HttpServletResponse &response) = 0;
     void service(HttpServletRequest &request, HttpServletResponse &response)
     {
         std::cout << "转发\n";
+        response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
+        response.set_header("Access-Control-Allow-Credentials", "true");
         if (request.get_method() == HttpServletRequest::OPTIONS)
         {
-            response.set_header("Access-Control-Allow-Origin", "*");
             response.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
             response.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-            response.set_header("Access-Control-Allow-Credentials", "true");
             response.set_status_code(HttpServletResponse::OK);
             response.send();
         }
         else if (request.get_method() == HttpServletRequest::GET)
         {
-            response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
-            response.set_header("Access-Control-Allow-Credentials", "true");
             this->doGet(request, response);
         }
         else
         {
-            response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
-            response.set_header("Access-Control-Allow-Credentials", "true");
             this->doPost(request, response);
         }
     }

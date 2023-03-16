@@ -96,7 +96,7 @@ public:
     }
 };
 
-class Type : public Custom<Asset>
+class Type : public Custom<Type>
 {
 public:
     std::string id;
