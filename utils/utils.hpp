@@ -145,7 +145,7 @@ T getObjValue(const boost::json::object &obj, const std::string &str)
     try
     {
         const auto &value = obj.at(str);
-        return value.as<T>();
+        return value.is_string() ? value.as_string() : value.as_int64();
     }
     catch (const std::exception &e)
     {
@@ -158,11 +158,11 @@ T getObjValue(const boost::json::object &obj, const std::string &str)
 */
 template <class T>
 std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &str) {
-    const boost::json::array &arr = data_obj.at(str).as_array();
+    const boost::json::array &arr = obj.at(str).as_array();
     std::vector<T> result;
     for (const auto &elem : arr) {
         try {
-            result.push_back(elem.as<T>());
+            result.push_back(elem.is_string() ? elem.as_string() : elem.as_int64());
         } catch (const std::exception &e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }

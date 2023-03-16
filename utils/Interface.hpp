@@ -7,11 +7,6 @@
 #include <boost/property_tree/json_parser.hpp>
 
 class HttpServer;
-class HttpSession;
-class Result;
-class Router;
-class ConnectionPool;
-class ThreadPool;
 // using namespace boost::property_tree;
 using boost::asio::ip::tcp;
 // 请求体接口

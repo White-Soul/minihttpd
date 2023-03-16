@@ -21,6 +21,7 @@ int main()
         {"/logs", new LogsServlet(server)},
         {"/updateType", new UpdateTypeServlet(server)},
         {"/updateCode", new UpdateCodeServlet(server)},
+        {"/Types", new TypeServlet(server)},
     };
     server.router(router);
     server.database("localhost", "root", "Czy010207...", "assets");

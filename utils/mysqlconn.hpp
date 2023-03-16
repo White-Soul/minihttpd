@@ -1,3 +1,4 @@
+#pragma once
 #include <mysqlx/xdevapi.h>
 #include <queue>
 #include <mutex>
