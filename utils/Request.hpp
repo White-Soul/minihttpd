@@ -59,7 +59,7 @@ public:
         return parameters_;
     }
 
-    std::string get_parameters(std::string name) const override
+    std::string get_parameter(std::string name) const override
     {
         for (auto p : parameters_)
         {
@@ -78,7 +78,7 @@ public:
 
     void set_body(std::istringstream &is) override
     {
-        ptree pt;
+        boost::property_tree::ptree pt;
         read_json(is, pt);
         body = is.str();
     }

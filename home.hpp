@@ -243,6 +243,19 @@ class DeleteUserServlet : public HttpServlet
 public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
+        auto account = request.get_parameter("account");
+        std::string sql = "delete from user where account = ?;";
+        std::shared_ptr<mysqlx::abi2::r0::Session> conn;
+        try
+        {
+            conn = server_.getConnPool()->getConnection();
+            conn->sql(sql).bind(account).execute();
+        }
+        catch (const mysqlx::Error e)
+        {
+            server_.getConnPool()->releaseConnection(conn);
+            std::cerr << e.what() << std::endl;
+        }
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
@@ -355,6 +368,23 @@ public:
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
+        auto body = request.get_body();
+        Type t = json_to_obj<Type>(body);
+        std::string sql = "insert into type(id,type_name) values(?,?)";
+        auto conn = server_.getConnPool()->getConnection();
+        try
+        {
+            conn->sql(sql).bind(t.id, t.type_name).execute();
+            server_.getConnPool()->releaseConnection(conn);
+            response.set_status_code(HttpServletResponse::OK);
+        }
+        catch (const mysqlx::Error &e)
+        {
+            server_.getConnPool()->releaseConnection(conn);
+            std::cerr << "插入失败" << e.what() << std::endl;
+            response.set_status_code(HttpServletResponse::INTERNAL_SERVER_ERROR);
+        }
+        response.send();
     }
     UpdateTypeServlet(HttpServer &ser) : HttpServlet(ser) {}
 };
@@ -369,4 +399,29 @@ public:
     {
     }
     UpdateCodeServlet(HttpServer &ser) : HttpServlet(ser) {}
+};
+// 获取类型
+class TypeServlet : public HttpServlet
+{public:
+    void doGet(HttpServletRequest& request, HttpServletResponse& response){
+        std::string sql = "select * from type";
+        auto conn = server_.getConnPool()->getConnection();
+        try{
+            auto res = conn->sql(sql).execute();
+            auto body = rowResult_to_json(res);
+            response.add_body(body);
+        }catch(const mysqlx::Error& e){
+            server_.getConnPool()->releaseConnection(conn);
+            std::cerr << e.what() << std::endl;
+        }
+        server_.getConnPool()->releaseConnection(conn);
+        response.set_status_code(HttpServletResponse::OK);
+        response.set_content_type("application/json");
+        response.send();
+    }
+    void doPost(HttpServletRequest& request, HttpServletResponse& response){
+
+    }
+
+    TypeServlet(HttpServer& ser) : HttpServlet(ser){}
 };

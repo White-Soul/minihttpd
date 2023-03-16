@@ -29,7 +29,7 @@ public:
     virtual Method get_method() const = 0;
     // 获取请求参数
     virtual std::vector<std::pair<std::string, std::string>> get_parameters() const = 0;
-    virtual std::string get_parameters(std::string) const = 0;
+    virtual std::string get_parameter(std::string) const = 0;
     // 添加请求头
     virtual void add_header(const std::string &name, const std::string &value) = 0;
     // 添加请求参数
