@@ -130,11 +130,7 @@ T getPtreeNode(const boost::property_tree::ptree &tree, const std::string &str)
  */
 const boost::json::object &body_to_obj(const std::string &body)
 {
-    boost::property_tree::ptree pt;
-    std::istringstream is(body);
-    read_json(is, pt);
-    boost::json::value json_val = boost::json::parse(body);
-    const boost::json::object &data_obj = json_val.at("data").as_object();
+    const boost::json::object &data_obj = boost::json::parse(body).as_object();
     return data_obj;
 }
 /**
@@ -144,33 +140,36 @@ const boost::json::object &body_to_obj(const std::string &body)
 // 定义访问 string 类型成员的模板函数
 template <typename T>
 typename std::enable_if<std::is_same<T, std::string>::value, T>::type
-get_member_impl(const boost::json::object& obj, const std::string& key)
+get_member_impl(const boost::json::object &obj, const std::string &key)
 {
-    return std::string(obj.at(key).as_string().data(),obj.at(key).as_string().size());
+    return std::string(obj.at(key).as_string().data(), obj.at(key).as_string().size());
 }
 
 // 定义访问 int64_t 类型成员的模板函数
 template <typename T>
 typename std::enable_if<std::is_same<T, int64_t>::value, T>::type
-get_member_impl(const boost::json::object& obj, const std::string& key)
+get_member_impl(const boost::json::object &obj, const std::string &key)
 {
     return obj.at(key).as_int64();
 }
 
 // 定义通用的 JSON 对象成员访问函数
 template <typename T>
-T getObjValue(const boost::json::object& obj, const std::string& key)
+T getObjValue(const boost::json::object &obj, const std::string &key)
 {
-    return get_member_impl<T>(obj, key);
+    if (obj.find(key) != obj.end())
+        return get_member_impl<T>(obj, key);
+    else
+        return T();
 }
 /**
  * 获取 boost::json::object 的数组内容
-*/
+ */
 
 // 定义访问 string 类型元素的模板函数
 template <typename T>
 typename std::enable_if<std::is_same<T, std::string>::value, T>::type
-get_array_elem_impl(const boost::json::value& elem)
+get_array_elem_impl(const boost::json::value &elem)
 {
     return std::string(elem.as_string().data(), elem.as_string().size());
 }
@@ -178,24 +177,30 @@ get_array_elem_impl(const boost::json::value& elem)
 // 定义访问 int64_t 类型元素的模板函数
 template <typename T>
 typename std::enable_if<std::is_same<T, int64_t>::value, T>::type
-get_array_elem_impl(const boost::json::value& elem)
+get_array_elem_impl(const boost::json::value &elem)
 {
     return elem.as_int64();
 }
 
 // 定义通用的 JSON 对象数组元素访问函数
 template <typename T>
-std::vector<T> getArrayValue(const boost::json::object& obj, const std::string& key)
+std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &key)
 {
     std::vector<T> result;
-    try {
-        const boost::json::array& arr = obj.at(key).as_array();
-        for (const auto& elem : arr) {
-            result.push_back(get_array_elem_impl<T>(elem));
+    if (obj.find(key) != obj.end())
+    {
+        try
+        {
+            const boost::json::array &arr = obj.at(key).as_array();
+            for (const auto &elem : arr)
+            {
+                result.push_back(get_array_elem_impl<T>(elem));
+            }
         }
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
     }
     return result;
 }
-

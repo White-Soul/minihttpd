@@ -22,6 +22,7 @@ public:
     virtual ~HttpServletRequest() {}
     // 获取请求方法
     virtual Method get_method() const = 0;
+    virtual void set_method(const Method& method) = 0;
     // 获取请求参数
     virtual std::vector<std::pair<std::string, std::string>> get_parameters() const = 0;
     virtual std::string get_parameter(std::string) const = 0;
@@ -34,6 +35,7 @@ public:
     virtual std::string get_header(std::string) const = 0;
     // 获取请求路径
     virtual std::string get_path() const = 0;
+    virtual void set_path(const std::string& str) = 0;
     // 获取HTTP版本
     virtual std::string get_http_version() const = 0;
     // 打印信息

@@ -40,7 +40,6 @@ void DispatcherServlet::doGet(HttpServletRequest &request, HttpServletResponse &
         response.send();
         return;
     }
-    std::cout << "path: " << path << std::endl;
     auto servlet = (router_.getRouter(path));
     servlet->doGet(request, response);
 }

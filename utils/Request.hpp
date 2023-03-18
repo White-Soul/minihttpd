@@ -18,11 +18,17 @@ public:
     {
         return method_;
     }
+    void set_method(const Method& method) override{
+        method_ = method;
+    }
 
     // 获取请求路径
     std::string get_path() const override
     {
         return path_;
+    }
+    void set_path(const std::string& str) override{
+        path_ = str;
     }
 
     // 获取HTTP版本

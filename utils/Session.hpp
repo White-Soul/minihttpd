@@ -129,6 +129,7 @@ public:
                 }
             }
             uri = uri.substr(0, query_start);
+            request->set_path(uri);
         }
 
         // 解析请求头
