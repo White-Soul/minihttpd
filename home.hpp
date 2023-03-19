@@ -479,6 +479,24 @@ public:
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
+        std::string newCode = request.get_parameter("newCode");
+        std::string oldCode = request.get_parameter("oldCode");
+        std::string sql = "update asset set code = ? where code = ?";
+        auto conn = server_.getConnPool()->getConnection();
+        Result res;
+        try{
+            conn->sql(sql).bind(newCode, oldCode).execute();
+            res.set_Message("Code更新成功");
+            res.set_Result_Code(Result_Code::OK_);
+        }catch(const mysqlx::Error& e){
+            std::cerr << "SQL Error: " << e.what() << std::endl;
+            res.set_Message("Code更新失败");
+            res.set_Result_Code(Result_Code::ERROR_);
+        }
+        server_.getConnPool()->releaseConnection(conn);
+        response.set_status_code(HttpServletResponse::OK);
+        response.set_content_type("text/html");
+        response.send();
     }
     UpdateCodeServlet(HttpServer &ser) : HttpServlet(ser) {}
 };

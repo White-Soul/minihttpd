@@ -10,6 +10,7 @@
 #include "Request.hpp"
 #include "Response.hpp"
 #include "Servlet.hpp"
+#include "utils.hpp"
 
 // 会话
 class HttpSession : public boost::enable_shared_from_this<HttpSession>
@@ -106,5 +107,8 @@ public:
     void removeAttribute(const std::string &key)
     {
         attributes_.erase(key);
+    }
+    ~HttpSession(){
+        
     }
 };

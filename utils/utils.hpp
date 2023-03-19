@@ -11,6 +11,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include "Result.hpp"
 #include "Interface.hpp"
+#include "Except.hpp"
 /**
  * 将 mysqlx::Value 转为 string
  */
@@ -209,7 +210,7 @@ std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &
 
 // 解析HTTP请求头
 std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &request_str)
-{
+try {
     std::cout << "解析HTTP请求头\n";
     // 分离请求行和请求头
     auto headers_start = request_str.find("\r\n");
@@ -314,6 +315,9 @@ std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &requ
     }
     std::cout << "解析完毕\n";
     return request;
+}catch(const std::exception& e){
+    std::cerr << "func: " << __FUNCTION__ << std::endl;
+    throw e;
 }
 
 std::string getUUID(){

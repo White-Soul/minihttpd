@@ -75,9 +75,16 @@ private:
         {
             return;
         }
-        boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
+
         thread_pool_.Enqueue([=]()
-                             { session->start(); });
+                             {
+                                 try
+                                 {
+                                    boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
+                                    session->start();
+                                 }catch(const std::exception& e){
+                                    std::cerr << "Error: " << e.what() << std::endl;; 
+                                 } });
         start_accept();
     }
     // io_context
