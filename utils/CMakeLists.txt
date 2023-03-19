@@ -1,4 +1,3 @@
-set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)
 
 add_library(utils STATIC
     Interface.hpp
@@ -12,3 +11,5 @@ add_library(utils STATIC
     Session.hpp
     utils.hpp
 )
+
+set_target_properties(utils PROPERTIES LINKER_LANGUAGE CXX)

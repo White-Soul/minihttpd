@@ -251,6 +251,7 @@ public:
     {
         auto body = request.get_body();
         User u = json_to_obj<User>(body);
+        u.name = u.account;
         auto conn = server_.getConnPool()->getConnection();
         std::string sql = "Insert into user(name, account, password) values('?','?','?')";
         Result res;
@@ -320,16 +321,13 @@ public:
     {
         auto body = request.get_body();
         Asset asset = json_to_obj<Asset>(body);
-        std::string sql = "insert into asset(money, amount, name, desc, code, type_id, user_account) values (" + std::to_string(asset.money) +
-                          "," + std::to_string(asset.amount) +
-                          ",'" + asset.name + "', '" + asset.desc +
-                          "','" + asset.code + "','" + asset.type_id +
-                          "','" + asset.user_account + "');";
+        asset.code = getUUID();
+        std::string sql = "insert into asset(money, amount, name, desc, code, type_id, user_account) values (?,?,?,?,?,?,?);";
         auto conn = server_.getConnPool()->getConnection();
         Result res;
         try
         {
-            conn->sql(sql).execute();
+            conn->sql(sql).bind(asset.money, asset.amount, asset.name, asset.desc, asset.code, asset.type_id, asset.user_account).execute();
             res.set_Result_Code(Result_Code::OK_);
             res.set_Message("入库成功");
         }
@@ -353,6 +351,23 @@ class DeleteAssetServlet : public HttpServlet
 public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
+        auto code = request.get_parameter("code");
+        std::string sql ="delete from asset where code = ?";
+        auto conn = server_.getConnPool()->getConnection();
+        Result res;
+        try{
+            conn->sql(sql).bind(code).execute();
+            res.set_Message("删除成功");
+            res.set_Result_Code(Result_Code::OK_);
+        }catch(const mysqlx::Error& e){
+            res.set_Message("删除失败");
+            res.set_Result_Code(Result_Code::ERROR_);
+            std::cout << "SQL ERROR: " << e.what() << std::endl;
+        }
+        server_.getConnPool()->releaseConnection(conn);
+        response.set_status_code(HttpServletResponse::OK);
+        response.set_content_type("text/html");
+        response.send();
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
@@ -433,13 +448,13 @@ public:
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
         auto body = request.get_body();
-        Type t = json_to_obj<Type>(body);
-        std::string sql = "insert into type(id,type_name) values(?,?)";
+        Asset t = json_to_obj<Asset>(body);
+        std::string sql = "update asset set type_id = ? where code = ?";
         auto conn = server_.getConnPool()->getConnection();
         Result res;
         try
         {
-            conn->sql(sql).bind(t.id, t.type_name).execute();
+            conn->sql(sql).bind(t.type_id, t.code).execute();
             res.set_Message("更新类型成功");
             res.set_Result_Code(Result_Code::OK_);
         }

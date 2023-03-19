@@ -6,6 +6,9 @@
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #include <type_traits>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "Result.hpp"
 #include "Interface.hpp"
 /**
@@ -128,10 +131,9 @@ T getPtreeNode(const boost::property_tree::ptree &tree, const std::string &str)
 /**
  * 将 request body的内容转为 boost::json::object 对象
  */
-const boost::json::object &body_to_obj(const std::string &body)
+boost::json::object body_to_obj(const std::string &body)
 {
-    const boost::json::object &data_obj = boost::json::parse(body).as_object();
-    return data_obj;
+    return boost::json::parse(body).as_object();
 }
 /**
  * 获取 boost::json::object 的内容
@@ -203,4 +205,119 @@ std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &
         }
     }
     return result;
+}
+
+// 解析HTTP请求头
+std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &request_str)
+{
+    std::cout << "解析HTTP请求头\n";
+    // 分离请求行和请求头
+    auto headers_start = request_str.find("\r\n");
+    if (headers_start == std::string::npos)
+    {
+        throw std::runtime_error("Invalid request: no headers found");
+    }
+    std::string request_line = request_str.substr(0, headers_start);
+    auto body_start = request_str.find("\r\n\r\n");
+    std::string headers = request_str.substr(headers_start + 2, body_start);
+
+    // 解析请求行
+    std::cout << "解析请求行\n";
+    std::vector<std::string> tokens;
+    boost::split(tokens, request_line, boost::is_any_of(" "));
+    if (tokens.size() != 3)
+    {
+        throw std::runtime_error("Invalid request: malformed request line");
+    }
+    auto method = tokens[0] == "GET" ? HttpServletRequest::GET : (tokens[0] == "POST" ? HttpServletRequest::POST : HttpServletRequest::OPTIONS);
+    auto uri = tokens[1];
+    auto version = tokens[2];
+
+    std::shared_ptr<HttpServletRequest> request(new HttpRequest(method, uri, version));
+
+    // 解析请求参数
+    std::cout << "解析请求参数\n";
+    auto query_start = uri.find('?');
+    if (query_start != std::string::npos)
+    {
+        std::string query_string = uri.substr(query_start + 1);
+        std::vector<std::string> params;
+        boost::split(params, query_string, boost::is_any_of("&"));
+        for (auto &param : params)
+        {
+            std::vector<std::string> kv;
+            boost::split(kv, param, boost::is_any_of("="));
+            if (kv.size() == 2)
+            {
+                (request)->add_parameter(kv[0], kv[1]);
+            }
+        }
+        uri = uri.substr(0, query_start);
+        request->set_path(uri);
+    }
+
+    // 解析请求头
+    std::vector<std::string> header_lines;
+    std::cout << "=========headers============\n";
+    std::cout << headers + "\n";
+    boost::split(header_lines, headers, boost::is_any_of("\r\n"));
+    for (auto &header : header_lines)
+    {
+        auto delimiter_pos = header.find(":");
+        if (delimiter_pos != std::string::npos)
+        {
+            std::string header_name = header.substr(0, delimiter_pos);
+            std::string header_value = header.substr(delimiter_pos + 1);
+            boost::algorithm::trim(header_value);
+            request->add_header(header_name, header_value);
+        }
+    }
+    if (request->get_method() == HttpServletRequest::OPTIONS)
+        return request;
+    // 解析请求体（仅对POST请求有效）
+    if (method == HttpServletRequest::POST)
+    {
+        std::cout << "解析请求体==仅对POST请求有效\n";
+        auto content_type = request->get_header("Content-Type");
+        if (content_type == "application/json")
+        {
+            if (body_start != std::string::npos)
+            {
+                auto body = request_str.substr(body_start + 4);
+                std::istringstream is(body);
+                request->set_body(is);
+            }
+        }
+        else if (content_type == "application/x-www-form-urlencoded")
+        {
+            auto body_start = request_str.find("\r\n\r\n");
+            if (body_start != std::string::npos)
+            {
+                auto body = request_str.substr(body_start + 4);
+                std::vector<std::string> params;
+                boost::split(params, body, boost::is_any_of("&"));
+                for (auto &param : params)
+                {
+                    std::vector<std::string> kv;
+                    boost::split(kv, param, boost::is_any_of("="));
+                    if (kv.size() == 2)
+                    {
+                        request->add_parameter(kv[0], kv[1]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            throw std::runtime_error("Unsupported Content-Type: " + content_type);
+        }
+    }
+    std::cout << "解析完毕\n";
+    return request;
+}
+
+std::string getUUID(){
+    boost::uuids::random_generator generator;
+    boost::uuids::uuid uuid = generator();
+    return boost::uuids::to_string(uuid);
 }
