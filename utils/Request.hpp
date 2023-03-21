@@ -18,7 +18,8 @@ public:
     {
         return method_;
     }
-    void set_method(const Method& method) override{
+    void set_method(const Method &method) override
+    {
         method_ = method;
     }
 
@@ -27,7 +28,8 @@ public:
     {
         return path_;
     }
-    void set_path(const std::string& str) override{
+    void set_path(const std::string &str) override
+    {
         path_ = str;
     }
 
@@ -96,6 +98,11 @@ public:
     void show() const override
     {
         std::cout << *this;
+    }
+
+    std::string get_authorization() const
+    {
+        return headers_.at("Authorization");
     }
 
 private:

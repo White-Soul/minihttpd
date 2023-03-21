@@ -6,9 +6,11 @@
 #include <boost/json.hpp>
 #include <boost/json/src.hpp>
 #include <type_traits>
+#include <boost/random.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/algorithm/hex.hpp>
 #include "Result.hpp"
 #include "Interface.hpp"
 #include "Except.hpp"
@@ -210,7 +212,8 @@ std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &
 
 // 解析HTTP请求头
 std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &request_str)
-try {
+try
+{
     std::cout << "解析HTTP请求头\n";
     // 分离请求行和请求头
     auto headers_start = request_str.find("\r\n");
@@ -315,13 +318,84 @@ try {
     }
     std::cout << "解析完毕\n";
     return request;
-}catch(const std::exception& e){
+}
+catch (const std::exception &e)
+{
     std::cerr << "func: " << __FUNCTION__ << std::endl;
     throw e;
 }
-
-std::string getUUID(){
+// 生成uuid
+std::string getUUID()
+{
     boost::uuids::random_generator generator;
     boost::uuids::uuid uuid = generator();
     return boost::uuids::to_string(uuid);
+}
+// 生成token
+std::string generate_token()
+{
+    // 生成16字节的随机数
+    boost::random::mt19937 rng(std::time(nullptr));
+    boost::random::uniform_int_distribution<> dist(0, 255);
+    std::vector<unsigned char> buf(16);
+    std::generate(buf.begin(), buf.end(), [&]()
+                  { return dist(rng); });
+
+    // 将随机数编码为16进制字符串
+    std::string hex_str;
+    boost::algorithm::hex(buf, std::back_inserter(hex_str));
+
+    // 生成UUID并将其编码为16进制字符串
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    std::string uuid_str = boost::uuids::to_string(uuid);
+
+    // 将随机数和UUID的16进制字符串拼接起来
+    std::string token = hex_str + uuid_str;
+
+    return token;
+}
+
+void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token, User &u)
+{
+    try
+    {
+        std::string sql = "insert into token(token, account) values(?, ?)";
+        conn->sql(sql).bind(token, u.account).execute();
+    }
+    catch (const mysqlx::Error &e)
+    {
+        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+    }
+}
+
+void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token)
+{
+    try
+    {
+        std::string sql = "delete from token where token = ?";
+        conn->sql(sql).bind(token).execute();
+    }
+    catch (const mysqlx::Error &e)
+    {
+        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+    }
+}
+
+std::string get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, User &u)
+{
+    try
+    {
+        std::string sql = "select token from token where account = ?";
+        auto res = conn->sql(sql).bind(u.account).execute();
+        mysqlx::abi2::r0::Row row = res.fetchOne();
+        if (!row.isNull())
+        {
+            return value_to_string(row.get(0));
+        }
+    }
+    catch (const mysqlx::Error &e)
+    {
+        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+    }
+    return "";
 }

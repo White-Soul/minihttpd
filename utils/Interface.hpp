@@ -7,6 +7,7 @@
 #include <boost/property_tree/json_parser.hpp>
 
 class HttpServer;
+class HttpSession;
 // using namespace boost::property_tree;
 using boost::asio::ip::tcp;
 // 请求体接口
@@ -22,7 +23,7 @@ public:
     virtual ~HttpServletRequest() {}
     // 获取请求方法
     virtual Method get_method() const = 0;
-    virtual void set_method(const Method& method) = 0;
+    virtual void set_method(const Method &method) = 0;
     // 获取请求参数
     virtual std::vector<std::pair<std::string, std::string>> get_parameters() const = 0;
     virtual std::string get_parameter(std::string) const = 0;
@@ -35,7 +36,7 @@ public:
     virtual std::string get_header(std::string) const = 0;
     // 获取请求路径
     virtual std::string get_path() const = 0;
-    virtual void set_path(const std::string& str) = 0;
+    virtual void set_path(const std::string &str) = 0;
     // 获取HTTP版本
     virtual std::string get_http_version() const = 0;
     // 打印信息
@@ -45,6 +46,8 @@ public:
     // 设置请求体
     virtual void set_body(std::istringstream &) = 0;
     virtual void set_body(std::string &) = 0;
+    // 设置token
+    virtual std::string get_authorization() const = 0;
 };
 // 响应体接口
 class HttpServletResponse
@@ -72,12 +75,24 @@ public:
     // 设置HTTP响应头；
     virtual void set_header(const std::string &name, const std::string &value) = 0;
     virtual void send() = 0;
+    // 设置token
+    virtual void set_authorization(std::string&) = 0;
 };
 // Servlet接口,所有处理类都要继承它
 class HttpServlet
 {
-protected:
+private:
     HttpServer &server_;
+    boost::shared_ptr<HttpSession> session_;
+
+protected:
+    boost::shared_ptr<HttpSession> get_session()
+    {
+        return session_;
+    }
+    HttpServer& get_server(){
+        return server_;
+    }
 
 public:
     virtual ~HttpServlet() {}
@@ -85,8 +100,9 @@ public:
     // HttpServlet(HttpServlet &ser) = delete;
     virtual void doGet(HttpServletRequest &request, HttpServletResponse &response) = 0;
     virtual void doPost(HttpServletRequest &request, HttpServletResponse &response) = 0;
-    void service(HttpServletRequest &request, HttpServletResponse &response)
+    void service(HttpServletRequest &request, HttpServletResponse &response, boost::shared_ptr<HttpSession> s)
     {
+        session_ = s;
         std::cout << "转发\n";
         response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
         response.set_header("Access-Control-Allow-Credentials", "true");

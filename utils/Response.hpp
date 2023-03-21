@@ -97,4 +97,8 @@ public:
     {
         body_ += body;
     }
+    void set_authorization(std::string &str) override
+    {
+        add_header("Authorization: " + str);
+    }
 };

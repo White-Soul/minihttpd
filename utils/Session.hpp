@@ -62,6 +62,7 @@ public:
     void read(const boost::system::error_code &error,
               size_t bytes_transferred)
     {
+        auto self(shared_from_this());
         std::cout << "读取请求头\n";
         if (error)
             return;
@@ -75,11 +76,9 @@ public:
             data_flag = false;
             this->request = parse_request_header(request_str);
             this->response = std::make_shared<HttpResponse>(this->socket_);
-            dispatcher_->service(*request, *response);
+            dispatcher_->service(*request, *response, self);
             return;
         }
-
-        auto self(shared_from_this());
         socket_->async_read_some(boost::asio::buffer(buffer),
                                  boost::bind(&HttpSession::read, self,
                                              boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
@@ -109,6 +108,5 @@ public:
         attributes_.erase(key);
     }
     ~HttpSession(){
-        
     }
 };

@@ -6,25 +6,6 @@
 #include "./custom/custom.hpp"
 #include <boost/json.hpp>
 
-class homeservlet : public HttpServlet
-{
-public:
-    virtual void doGet(HttpServletRequest &request, HttpServletResponse &response)
-    {
-        auto conn = ConnectionPool("localhost", "root", "Czy010207...", "test").getConnection();
-        auto result = conn->getDefaultSchema().getTable("test").select("*").execute();
-        auto json_str = rowResult_to_json(result);
-        response.set_content_type("application/json;");
-        response.add_body(json_str);
-        response.set_status_code(HttpServletResponse::OK);
-        response.send();
-        std::cout << "get......home" << std::endl;
-    }
-    virtual void doPost(HttpServletRequest &request, HttpServletResponse &response)
-    {
-        doGet(request, response);
-    }
-};
 // 登录
 class LoginServlet : public HttpServlet
 {
@@ -37,10 +18,11 @@ public:
     {
         auto json = request.get_body();
         auto data_obj = body_to_obj(json);
+        std::string token = generate_token();
         std::string account = getObjValue<std::string>(data_obj, "account");
         std::string password = getObjValue<std::string>(data_obj, "password");
         auto sql = "select * from user where account = '" + account + "' and password = '" + password + "';";
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = this->get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -51,6 +33,7 @@ public:
                 res.set_Data(u.serialize());
                 res.set_Result_Code(Result_Code::OK_);
                 res.set_Message("存在用户");
+                save_token(conn, token, u);
             }
             else
             {
@@ -65,9 +48,10 @@ public:
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
         response.set_body(result_to_json(res));
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json;");
+        response.set_authorization(token);
         response.send();
     }
 };
@@ -95,7 +79,7 @@ public:
         auto now_c = std::chrono::system_clock::to_time_t(now);
         // u.id = now_c;
         auto sql = "select * from user where name = " + u.name;
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -122,7 +106,7 @@ public:
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
         response.set_body(result_to_json(res));
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("text/html");
         response.send();
@@ -138,7 +122,7 @@ public:
     void doPost(HttpServletRequest &request, HttpServletResponse &response) override
     {
         User u = json_to_obj<User>(request.get_body());
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -162,7 +146,7 @@ public:
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
 
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json");
         response.set_body(result_to_json(res));
@@ -177,7 +161,7 @@ class UsersServlet : public HttpServlet
 public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -193,7 +177,7 @@ public:
             res.set_Message("SQL执行错误");
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.add_body(result_to_json(res));
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json");
@@ -218,7 +202,7 @@ public:
         User u = json_to_obj<User>(body);
         std::string sql = "select * from asset where (user_account = '" + u.account + "');";
         Result res;
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         try
         {
             auto result = conn->sql(sql).execute();
@@ -233,7 +217,7 @@ public:
             res.set_Result_Code(Result_Code::ERROR_);
             res.set_Message("请求失败");
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.add_body(result_to_json(res));
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json");
@@ -252,7 +236,7 @@ public:
         auto body = request.get_body();
         User u = json_to_obj<User>(body);
         u.name = u.account;
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         std::string sql = "Insert into user(name, account, password) values('?','?','?')";
         Result res;
         try
@@ -267,7 +251,7 @@ public:
             res.set_Result_Code(Result_Code::ERROR_);
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.add_body(result_to_json(res));
         response.set_status_code(HttpServletResponse::OK);
         response.send();
@@ -287,7 +271,7 @@ public:
         Result res;
         try
         {
-            conn = server_.getConnPool()->getConnection();
+            conn = get_server().getConnPool()->getConnection();
             conn->sql(sql).bind(account).execute();
             res.set_Message("删除成功");
             res.set_Result_Code(Result_Code::OK_);
@@ -298,7 +282,7 @@ public:
             res.set_Result_Code(Result_Code::ERROR_);
             std::cerr << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.add_body(result_to_json(res));
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json");
@@ -323,7 +307,7 @@ public:
         Asset asset = json_to_obj<Asset>(body);
         asset.code = getUUID();
         std::string sql = "insert into asset(money, amount, name, desc, code, type_id, user_account) values (?,?,?,?,?,?,?);";
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -337,7 +321,7 @@ public:
             res.set_Message("入库失败");
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.add_body(result_to_json(res));
         response.send();
@@ -352,19 +336,22 @@ public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
         auto code = request.get_parameter("code");
-        std::string sql ="delete from asset where code = ?";
-        auto conn = server_.getConnPool()->getConnection();
+        std::string sql = "delete from asset where code = ?";
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
-        try{
+        try
+        {
             conn->sql(sql).bind(code).execute();
             res.set_Message("删除成功");
             res.set_Result_Code(Result_Code::OK_);
-        }catch(const mysqlx::Error& e){
+        }
+        catch (const mysqlx::Error &e)
+        {
             res.set_Message("删除失败");
             res.set_Result_Code(Result_Code::ERROR_);
             std::cout << "SQL ERROR: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("text/html");
         response.send();
@@ -389,13 +376,14 @@ public:
         std::string fromUser = getObjValue<std::string>(obj, "formUser");
         std::string toUser = getObjValue<std::string>(obj, "toUser");
         std::vector<std::string> selected = getArrayValue<std::string>(obj, "selected");
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
+        std::string sql = "update asset set user_account = ? where user_account = ? and code = ?";
         try
         {
             for (auto a : selected)
             {
-                conn->getDefaultSchema().getTable("asset").update().set("user_account", toUser).where("code = " + a);
+                conn->sql(sql).bind(toUser, fromUser, a).execute();
             }
             res.set_Result_Code(Result_Code::OK_);
             res.set_Message("更新成功");
@@ -406,7 +394,7 @@ public:
             res.set_Message("更新失败");
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.add_body(result_to_json(res));
         response.send();
@@ -422,6 +410,27 @@ public:
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
     {
+        auto body = request.get_body();
+        Asset ass = json_to_obj<Asset>(body);
+        auto conn = get_server().getConnPool()->getConnection();
+        Result res;
+        try
+        {
+            std::string sql = "update asset set type_id=?,name=?,money=?,amount=? where code = ?";
+            conn->sql(sql).bind(ass.type_id, ass.name, ass.money, ass.amount, ass.code).execute();
+            res.set_Message("更新成功");
+            res.set_Result_Code(Result_Code::OK_);
+        }
+        catch (const mysqlx::Error &e)
+        {
+            std::cerr << "SQL Error: " << e.what() << std::endl;
+            res.set_Message("更新失败");
+            res.set_Result_Code(Result_Code::ERROR_);
+        }
+        get_server().getConnPool()->releaseConnection(conn);
+        response.set_status_code(HttpResponse::OK);
+        response.set_content_type("text/html");
+        response.send();
     }
     UpdateAssetServlet(HttpServer &ser) : HttpServlet(ser) {}
 };
@@ -450,7 +459,7 @@ public:
         auto body = request.get_body();
         Asset t = json_to_obj<Asset>(body);
         std::string sql = "update asset set type_id = ? where code = ?";
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
         try
         {
@@ -464,7 +473,7 @@ public:
             res.set_Result_Code(Result_Code::ERROR_);
             std::cerr << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.send();
     }
@@ -482,18 +491,21 @@ public:
         std::string newCode = request.get_parameter("newCode");
         std::string oldCode = request.get_parameter("oldCode");
         std::string sql = "update asset set code = ? where code = ?";
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result res;
-        try{
+        try
+        {
             conn->sql(sql).bind(newCode, oldCode).execute();
             res.set_Message("Code更新成功");
             res.set_Result_Code(Result_Code::OK_);
-        }catch(const mysqlx::Error& e){
+        }
+        catch (const mysqlx::Error &e)
+        {
             std::cerr << "SQL Error: " << e.what() << std::endl;
             res.set_Message("Code更新失败");
             res.set_Result_Code(Result_Code::ERROR_);
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("text/html");
         response.send();
@@ -507,7 +519,7 @@ public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
         std::string sql = "select * from type";
-        auto conn = server_.getConnPool()->getConnection();
+        auto conn = get_server().getConnPool()->getConnection();
         Result result;
         try
         {
@@ -523,7 +535,7 @@ public:
             result.set_Message("请求失败");
             std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
         }
-        server_.getConnPool()->releaseConnection(conn);
+        get_server().getConnPool()->releaseConnection(conn);
         response.set_status_code(HttpServletResponse::OK);
         response.set_content_type("application/json");
         response.send();
