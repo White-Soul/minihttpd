@@ -18,7 +18,6 @@ public:
         {
             connections_.emplace(createConnection());
         }
-        std::cout << "数据库初始化" << std::endl;
     }
 
     ConnectionPool()

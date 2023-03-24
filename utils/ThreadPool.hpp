@@ -6,8 +6,10 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
-
+#include "utils.hpp"
 #define THREADNUM 128
+
+_HTTPD_BEGIN_
 // 线程池
 class ThreadPool
 {
@@ -75,8 +77,12 @@ void ThreadPool::Init(size_t numThreads)
                         task = std::move(this->tasks_.front());
                         this->tasks_.pop();
                     }
-
-                    task();
+                    try{
+                        task();
+                    }catch(...){
+                        handle_excepiton(std::current_exception());
+                    }
+                   
                 } });
     }
 }
@@ -132,3 +138,5 @@ void ThreadPool::resize(size_t numThreads)
         }
     }
 }
+
+_HTTPD_END_

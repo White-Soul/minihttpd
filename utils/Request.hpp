@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include "Interface.hpp"
+_HTTPD_BEGIN_
 
 class HttpRequest : public HttpServletRequest
 {
@@ -131,3 +132,5 @@ std::ostream &operator<<(std::ostream &os, const HttpRequest &req)
     }
     return os;
 }
+
+_HTTPD_END_

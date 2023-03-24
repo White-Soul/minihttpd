@@ -378,12 +378,12 @@ public:
         std::vector<std::string> selected = getArrayValue<std::string>(obj, "selected");
         auto conn = get_server().getConnPool()->getConnection();
         Result res;
-        std::string sql = "update asset set user_account = ? where user_account = ? and code = ?";
+        std::string sql = "update asset set user_account = ? where code = ?";
         try
         {
             for (auto a : selected)
             {
-                conn->sql(sql).bind(toUser, fromUser, a).execute();
+                conn->sql(sql).bind(toUser, a).execute();
             }
             res.set_Result_Code(Result_Code::OK_);
             res.set_Message("更新成功");

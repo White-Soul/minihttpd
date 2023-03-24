@@ -3,6 +3,8 @@
 #include <boost/asio.hpp>
 #include "Interface.hpp"
 
+_HTTPD_BEGIN_
+
 class HttpResponse : public HttpServletResponse
 {
 private:
@@ -102,3 +104,5 @@ public:
         add_header("Authorization: " + str);
     }
 };
+
+_HTTPD_END_

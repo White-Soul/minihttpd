@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
+#include "Interface.hpp"
 
+_HTTPD_BEGIN_
 enum Result_Code
 {
     OK_,
@@ -60,3 +62,5 @@ std::string Result::get_Result_Code_str()
         break;
     }
 }
+
+_HTTPD_END_

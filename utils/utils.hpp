@@ -14,6 +14,9 @@
 #include "Result.hpp"
 #include "Interface.hpp"
 #include "Except.hpp"
+#include "Logs.hpp"
+
+_HTTPD_BEGIN_
 /**
  * 将 mysqlx::Value 转为 string
  */
@@ -212,9 +215,7 @@ std::vector<T> getArrayValue(const boost::json::object &obj, const std::string &
 
 // 解析HTTP请求头
 std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &request_str)
-try
 {
-    std::cout << "解析HTTP请求头\n";
     // 分离请求行和请求头
     auto headers_start = request_str.find("\r\n");
     if (headers_start == std::string::npos)
@@ -226,7 +227,6 @@ try
     std::string headers = request_str.substr(headers_start + 2, body_start);
 
     // 解析请求行
-    std::cout << "解析请求行\n";
     std::vector<std::string> tokens;
     boost::split(tokens, request_line, boost::is_any_of(" "));
     if (tokens.size() != 3)
@@ -240,7 +240,6 @@ try
     std::shared_ptr<HttpServletRequest> request(new HttpRequest(method, uri, version));
 
     // 解析请求参数
-    std::cout << "解析请求参数\n";
     auto query_start = uri.find('?');
     if (query_start != std::string::npos)
     {
@@ -262,8 +261,6 @@ try
 
     // 解析请求头
     std::vector<std::string> header_lines;
-    std::cout << "=========headers============\n";
-    std::cout << headers + "\n";
     boost::split(header_lines, headers, boost::is_any_of("\r\n"));
     for (auto &header : header_lines)
     {
@@ -281,7 +278,6 @@ try
     // 解析请求体（仅对POST请求有效）
     if (method == HttpServletRequest::POST)
     {
-        std::cout << "解析请求体==仅对POST请求有效\n";
         auto content_type = request->get_header("Content-Type");
         if (content_type == "application/json")
         {
@@ -316,14 +312,9 @@ try
             throw std::runtime_error("Unsupported Content-Type: " + content_type);
         }
     }
-    std::cout << "解析完毕\n";
     return request;
 }
-catch (const std::exception &e)
-{
-    std::cerr << "func: " << __FUNCTION__ << std::endl;
-    throw e;
-}
+
 // 生成uuid
 std::string getUUID()
 {
@@ -354,20 +345,22 @@ std::string generate_token()
 
     return token;
 }
-
-void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token, User &u)
+// 保存token,对应用户
+template<class T>
+void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token, T &u)
 {
+    static_assert(std::is_base_of<Custom<T>, T>::value, "T must be derived from Custom<T>");
     try
     {
         std::string sql = "insert into token(token, account) values(?, ?)";
-        conn->sql(sql).bind(token, u.account).execute();
+        conn->sql(sql).bind(token, u.getId()).execute();
     }
     catch (const mysqlx::Error &e)
     {
         std::cerr << "SQL ERROR: " << e.what() << std::endl;
     }
 }
-
+// 移除token
 void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token)
 {
     try
@@ -380,13 +373,15 @@ void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &
         std::cerr << "SQL ERROR: " << e.what() << std::endl;
     }
 }
-
-std::string get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, User &u)
+// 获取token，对应用户
+template<class T>
+std::string get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, T &u)
 {
+    static_assert(std::is_base_of<Custom<T>, T>::value, "T must be derived from Custom<T>");
     try
     {
         std::string sql = "select token from token where account = ?";
-        auto res = conn->sql(sql).bind(u.account).execute();
+        auto res = conn->sql(sql).bind(u.getId()).execute();
         mysqlx::abi2::r0::Row row = res.fetchOne();
         if (!row.isNull())
         {
@@ -399,3 +394,20 @@ std::string get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, User &u)
     }
     return "";
 }
+// 异常处理
+void handle_excepiton(std::exception_ptr eptr)
+{
+    try
+    {
+        if (eptr)
+        {
+            std::rethrow_exception(eptr);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        HttpdLog::Error(e.what());
+    }
+}
+
+_HTTPD_END_

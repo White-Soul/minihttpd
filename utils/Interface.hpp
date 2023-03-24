@@ -5,6 +5,10 @@
 #include <boost/asio.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#define _HTTPD_BEGIN_ namespace httpd {
+#define _HTTPD_END_ }  
+
+_HTTPD_BEGIN_
 
 class HttpServer;
 class HttpSession;
@@ -76,7 +80,7 @@ public:
     virtual void set_header(const std::string &name, const std::string &value) = 0;
     virtual void send() = 0;
     // 设置token
-    virtual void set_authorization(std::string&) = 0;
+    virtual void set_authorization(std::string &) = 0;
 };
 // Servlet接口,所有处理类都要继承它
 class HttpServlet
@@ -90,7 +94,8 @@ protected:
     {
         return session_;
     }
-    HttpServer& get_server(){
+    HttpServer &get_server()
+    {
         return server_;
     }
 
@@ -103,7 +108,6 @@ public:
     void service(HttpServletRequest &request, HttpServletResponse &response, boost::shared_ptr<HttpSession> s)
     {
         session_ = s;
-        std::cout << "转发\n";
         response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
         response.set_header("Access-Control-Allow-Credentials", "true");
         if (request.get_method() == HttpServletRequest::OPTIONS)
@@ -129,4 +133,7 @@ class Custom
 {
     virtual std::string serialize() const = 0;
     static T deserialize(const std::string &json){};
+    std::string getId() const { return ""; };
 };
+
+_HTTPD_END_

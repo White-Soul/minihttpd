@@ -5,6 +5,8 @@
 #include "mysqlconn.hpp"
 #include <map>
 
+_HTTPD_BEGIN_
+
 class DispatcherServlet : public HttpServlet
 {
 public:
@@ -31,7 +33,7 @@ void DispatcherServlet::destroy()
 
 void DispatcherServlet::doGet(HttpServletRequest &request, HttpServletResponse &response)
 {
-    std::cout << "doGet\n";
+    HttpdLog::Info("Forward GET");
     std::string path = request.get_path();
     if (router_.count(path) == 0)
     {
@@ -46,7 +48,7 @@ void DispatcherServlet::doGet(HttpServletRequest &request, HttpServletResponse &
 
 void DispatcherServlet::doPost(HttpServletRequest &request, HttpServletResponse &response)
 {
-    std::cout << "doPost\n";
+    HttpdLog::Info("Forward POST");
     std::string path = request.get_path();
     if (router_.count(path) == 0)
     {
@@ -59,3 +61,5 @@ void DispatcherServlet::doPost(HttpServletRequest &request, HttpServletResponse 
     auto servlet = (router_.getRouter(path));
     servlet->doPost(request, response);
 }
+
+_HTTPD_END_

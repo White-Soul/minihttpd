@@ -12,6 +12,8 @@
 #include "Servlet.hpp"
 #include "utils.hpp"
 
+_HTTPD_BEGIN_
+
 // 会话
 class HttpSession : public boost::enable_shared_from_this<HttpSession>
 {
@@ -41,7 +43,7 @@ public:
     // 启动一个会话
     void start()
     {
-        std::cout << "启动一个会话\n";
+        HttpdLog::Info("Start Session");
         while (true)
         {
             if (!data_flag)
@@ -63,7 +65,6 @@ public:
               size_t bytes_transferred)
     {
         auto self(shared_from_this());
-        std::cout << "读取请求头\n";
         if (error)
             return;
         request_str += std::string(buffer.begin(), buffer.begin() + bytes_transferred);
@@ -72,7 +73,7 @@ public:
         if (-1 != index)
         {
             // 分发请求
-            std::cout << "分发请求\n";
+            HttpdLog::Info("Distribution Request");
             data_flag = false;
             this->request = parse_request_header(request_str);
             this->response = std::make_shared<HttpResponse>(this->socket_);
@@ -110,3 +111,5 @@ public:
     ~HttpSession(){
     }
 };
+
+_HTTPD_END_

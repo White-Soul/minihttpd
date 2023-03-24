@@ -3,7 +3,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include "../utils/utils.hpp"
-
+using namespace httpd;
 class User : public Custom<User>
 {
 public:
@@ -16,6 +16,10 @@ public:
     std::string qq;
     std::string wchat;
     int isRoot;
+
+    std::string getId() const{
+        return account;
+    }
 
     std::string serialize() const override
     {
@@ -79,6 +83,10 @@ public:
         return os.str();
     }
 
+    std::string getId() const{
+        return code;
+    }
+
     static Asset deserialize(const std::string &json)
     {
         Asset u;
@@ -109,6 +117,10 @@ public:
         pt.put("type_name", type_name);
         boost::property_tree::write_json(os, pt, false);
         return os.str();
+    }
+
+    std::string getId() const {
+        return id;
     }
 
     static Type deserialize(const std::string &json)
@@ -142,6 +154,10 @@ public:
         pt.put("date", date);
         boost::property_tree::write_json(os, pt, false);
         return os.str();
+    }
+
+    std::string getId() const {
+        return "";
     }
 
     static Log deserialize(const std::string &json)

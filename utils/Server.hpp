@@ -11,6 +11,7 @@
 #include "Router.hpp"
 #include "mysqlconn.hpp"
 #include "Servlet.hpp"
+_HTTPD_BEGIN_
 
 // 服务器类
 class HttpServer
@@ -21,7 +22,7 @@ public:
         : io_context(io_context), acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
           thread_pool_(ThreadPool::GetInstance(numThread))
     {
-        std::cout << "启动服务\n";
+        HttpdLog::Info("Httpd Service Start");
         start_accept();
     }
     HttpServer(const HttpServer &) = delete;
@@ -31,13 +32,13 @@ public:
     // 等待异步请求
     void run()
     {
-        std::cout << "等待异步请求\n";
+        HttpdLog::Info("Wait For Asynchronous Request");
         io_context.run();
     }
     // 绑定路由
     void router(Router &router)
     {
-        std::cout << "绑定路由\n";
+        HttpdLog::Info("Bind Route");
         servlet_ = std::make_shared<DispatcherServlet>(router, *this);
     }
     void router(std::initializer_list<std::pair<std::string, HttpServlet *>> list)
@@ -51,7 +52,7 @@ public:
                   const std::string &password, const std::string &database,
                   unsigned int port = 33060, unsigned int pool_size = 128)
     {
-        std::cout << "绑定数据库" << std::endl;
+        HttpdLog::Info("Bind Database");
         conn_pool = std::make_shared<ConnectionPool>(host, user, password, database, port, pool_size);
     }
     std::shared_ptr<ConnectionPool> getConnPool()
@@ -63,7 +64,7 @@ private:
     // 监听请求
     void start_accept()
     {
-        std::cout << "监听请求\n";
+        HttpdLog::Info("Listen Request");
         auto socket = std::make_shared<tcp::socket>(io_context);
         acceptor_.async_accept(*socket, boost::bind(&HttpServer::accept_handler,
                                                     this, boost::asio::placeholders::error, socket));
@@ -78,13 +79,12 @@ private:
 
         thread_pool_.Enqueue([=]()
                              {
-                                 try
-                                 {
-                                    boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
+                                try{
+                                     boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
                                     session->start();
-                                 }catch(const std::exception& e){
-                                    std::cerr << "Error: " << e.what() << std::endl;; 
-                                 } });
+                                }catch(...){
+                                    handle_excepiton(std::current_exception());
+                                } });
         start_accept();
     }
     // io_context
@@ -98,3 +98,9 @@ private:
     // 数据库连接池
     std::shared_ptr<ConnectionPool> conn_pool;
 };
+
+void run_session()
+{
+}
+
+_HTTPD_END_

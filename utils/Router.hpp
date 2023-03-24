@@ -6,6 +6,8 @@
 #include <initializer_list>
 #include "Servlet.hpp"
 
+_HTTPD_BEGIN_
+
 class Router
 {
 private:
@@ -71,3 +73,5 @@ public:
         return vec;
     }
 };
+
+_HTTPD_END_
