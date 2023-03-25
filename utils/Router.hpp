@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 #include <initializer_list>
-#include "Servlet.hpp"
+#include "Interface.hpp"
 
 _HTTPD_BEGIN_
 

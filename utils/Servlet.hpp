@@ -3,6 +3,7 @@
 #include "Interface.hpp"
 #include "Router.hpp"
 #include "mysqlconn.hpp"
+#include "utils.hpp"
 #include <map>
 
 _HTTPD_BEGIN_

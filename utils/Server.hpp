@@ -4,6 +4,8 @@
 #include <thread>
 #include <iostream>
 #include <map>
+#include <vector>
+#include <mutex>
 #include <type_traits>
 #include "Session.hpp"
 #include "Interface.hpp"
@@ -11,6 +13,7 @@
 #include "Router.hpp"
 #include "mysqlconn.hpp"
 #include "Servlet.hpp"
+#include "Timer.hpp"
 _HTTPD_BEGIN_
 
 // 服务器类
@@ -59,6 +62,10 @@ public:
     {
         return conn_pool;
     }
+    
+    Timer getTimer(int max_count = 1){
+        return Timer(max_count);
+    }
 
 private:
     // 监听请求
@@ -97,10 +104,8 @@ private:
     ThreadPool &thread_pool_;
     // 数据库连接池
     std::shared_ptr<ConnectionPool> conn_pool;
+    // 定时器
+    Timer timer_;
 };
-
-void run_session()
-{
-}
 
 _HTTPD_END_

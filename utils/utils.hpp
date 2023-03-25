@@ -345,23 +345,21 @@ std::string generate_token()
 
     return token;
 }
-// 保存token,对应用户
-template<class T>
-void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token, T &u)
+// 保存token,
+void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token)
 {
-    static_assert(std::is_base_of<Custom<T>, T>::value, "T must be derived from Custom<T>");
     try
     {
-        std::string sql = "insert into token(token, account) values(?, ?)";
-        conn->sql(sql).bind(token, u.getId()).execute();
+        std::string sql = "insert into token(token) values(?)";
+        conn->sql(sql).bind(token).execute();
     }
     catch (const mysqlx::Error &e)
     {
-        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+        HttpdLog::Error(e.what());
     }
 }
 // 移除token
-void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &token)
+void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token)
 {
     try
     {
@@ -370,29 +368,27 @@ void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, std::string &
     }
     catch (const mysqlx::Error &e)
     {
-        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+        HttpdLog::Error(e.what());
     }
 }
-// 获取token，对应用户
-template<class T>
-std::string get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, T &u)
+// 查询token是否过期
+bool get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string & token)
 {
-    static_assert(std::is_base_of<Custom<T>, T>::value, "T must be derived from Custom<T>");
     try
     {
-        std::string sql = "select token from token where account = ?";
-        auto res = conn->sql(sql).bind(u.getId()).execute();
+        std::string sql = "select token from token where token = ?";
+        auto res = conn->sql(sql).bind(token).execute();
         mysqlx::abi2::r0::Row row = res.fetchOne();
         if (!row.isNull())
         {
-            return value_to_string(row.get(0));
+            return true;
         }
     }
     catch (const mysqlx::Error &e)
     {
-        std::cerr << "SQL ERROR: " << e.what() << std::endl;
+        HttpdLog::Error(e.what());
     }
-    return "";
+    return false;
 }
 // 异常处理
 void handle_excepiton(std::exception_ptr eptr)
