@@ -5,8 +5,10 @@
 #include <boost/asio.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
-#define _HTTPD_BEGIN_ namespace httpd {
-#define _HTTPD_END_ }  
+#define _HTTPD_BEGIN_ \
+    namespace httpd   \
+    {
+#define _HTTPD_END_ }
 
 _HTTPD_BEGIN_
 
@@ -110,10 +112,11 @@ public:
         session_ = s;
         response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
         response.set_header("Access-Control-Allow-Credentials", "true");
+        response.set_header("Access-Control-Expose-Headers", "Authorization");
         if (request.get_method() == HttpServletRequest::OPTIONS)
         {
-            response.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
             response.set_header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+            response.set_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
             response.set_status_code(HttpServletResponse::OK);
             response.send();
         }

@@ -139,8 +139,6 @@ public:
 class Log : public Custom<Log>
 {
 public:
-    std::string user_account;
-    std::string asset_code;
     std::string message;
     std::string date;
 
@@ -148,8 +146,6 @@ public:
     {
         std::ostringstream os;
         boost::property_tree::ptree pt;
-        pt.put("user_account", user_account);
-        pt.put("asset_code", asset_code);
         pt.put("message", message);
         pt.put("date", date);
         boost::property_tree::write_json(os, pt, false);
@@ -166,8 +162,6 @@ public:
         boost::property_tree::ptree tree;
         std::istringstream ss(json);
         boost::property_tree::read_json(ss, tree);
-        u.user_account = getPtreeNode<std::string>(tree, "user_account");
-        u.asset_code = getPtreeNode<std::string>(tree, "asset_code");
         u.message = getPtreeNode<std::string>(tree, "message");
         u.date = getPtreeNode<std::string>(tree, "date");
 

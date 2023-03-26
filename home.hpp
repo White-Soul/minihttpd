@@ -32,9 +32,9 @@ public:
                 res.set_Data(u.serialize());
                 res.set_Result_Code(Result_Code::OK_);
                 res.set_Message("存在用户");
-                save_token(conn, token);
-                get_server().getTimer().SetInterval(60*60, 
-                        boost::bind(&delete_token, conn, token));
+                save_token(conn, token, u.account);
+                get_server().getTimer().SetInterval(60 * 60,
+                                                    std::bind(&delete_token, conn, token));
             }
             else
             {
@@ -54,6 +54,24 @@ public:
         response.set_content_type("application/json;");
         response.set_authorization(token);
         response.send();
+    }
+};
+// 退出登录
+class LogoutServlet : public HttpServlet
+{
+public:
+    LogoutServlet(HttpServer &ser) : HttpServlet(ser) {}
+    void doGet(HttpServletRequest &request, HttpServletResponse &response)
+    {
+        auto conn = get_server().getConnPool()->getConnection();
+        delete_token(conn, request.get_authorization());
+        get_server().getConnPool()->releaseConnection(conn);
+        response.set_status_code(HttpResponse::OK);
+        response.set_content_type("text/html");
+        response.send();
+    }
+    void doPost(HttpServletRequest &request, HttpServletResponse &response)
+    {
     }
 };
 // 注册
@@ -191,7 +209,6 @@ public:
                 res.set_Message("SQL执行错误");
                 std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
             }
-            get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
             response.set_status_code(HttpServletResponse::OK);
             response.set_content_type("application/json");
@@ -201,6 +218,7 @@ public:
             response.set_status_code(HttpServletResponse::NOT_FOUND);
             response.set_content_type("text/html");
         }
+        get_server().getConnPool()->releaseConnection(conn);
         response.send();
     }
     void doPost(HttpServletRequest &request, HttpServletResponse &response)
@@ -241,7 +259,6 @@ public:
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("请求失败");
             }
-            get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
             response.set_status_code(HttpServletResponse::OK);
             response.set_content_type("application/json");
@@ -251,6 +268,7 @@ public:
             response.set_status_code(HttpServletResponse::NOT_FOUND);
             response.set_content_type("text/html");
         }
+        get_server().getConnPool()->releaseConnection(conn);
         response.send();
     }
 };
@@ -340,6 +358,37 @@ public:
     }
 
     DeleteUserServlet(HttpServer &ser) : HttpServlet(ser) {}
+};
+// 更新用户
+class UpdateUser : public HttpServlet
+{
+public:
+    UpdateUser(HttpServer &ser) : HttpServlet(ser) {}
+    void doGet(HttpServletRequest &req, HttpServletResponse &resp) override
+    {
+    }
+    void doPost(HttpServletRequest &req, HttpServletResponse &resp) override
+    {
+        auto conn = get_server().getConnPool()->getConnection();
+        try
+        {
+            auto body = req.get_body();
+            User u = json_to_obj<User>(body);
+            std::string sql = "update user set "
+             "password = ?,name=?,email=?,phone=?,address=?,qq=?,wchat=?"
+             "where account = ?";
+            conn->sql(sql).bind(u.password,u.name,u.email,u.phone,u.address,u.qq,u.wchat, u.account).execute();
+            resp.set_status_code(HttpResponse::OK);
+            resp.set_content_type("text/html");
+        }
+        catch (...)
+        {
+            handle_excepiton(std::current_exception());
+            resp.set_status_code(HttpResponse::INTERNAL_SERVER_ERROR);
+            resp.set_content_type("text/html");
+        }
+        resp.send();
+    }
 };
 // 添加资产
 class AddAssetServlet : public HttpServlet
@@ -649,7 +698,7 @@ public:
 class TypeServlet : public HttpServlet
 {
 public:
-    void doGet(HttpServletRequest &request, HttpServletResponse &response)
+    void doGet(HttpServletRequest &request, HttpServletResponse &response) override
     {
         auto conn = get_server().getConnPool()->getConnection();
         if (get_token(conn, request.get_authorization()))
@@ -688,4 +737,32 @@ public:
     }
 
     TypeServlet(HttpServer &ser) : HttpServlet(ser) {}
+};
+// 保存日志
+class SaveLog : public HttpServlet
+{
+public:
+    SaveLog(HttpServer &ser) : HttpServlet(ser) {}
+    void doGet(HttpServletRequest &req, HttpServletResponse &resp)
+    {
+    }
+    void doPost(HttpServletRequest &req, HttpServletResponse &resp) override
+    {
+
+        auto conn = get_server().getConnPool()->getConnection();
+        try
+        {
+            std::string sql = "insert into log(message, data) values(?,?)";
+            auto log = req.get_body();
+            conn->sql(sql).bind(log, LocalTime("%F")).execute();
+        }
+        catch (...)
+        {
+            handle_excepiton(std::current_exception());
+        }
+        get_server().getConnPool()->releaseConnection(conn);
+        resp.set_status_code(HttpResponse::OK);
+        resp.set_content_type("text/html");
+        resp.send();
+    }
 };

@@ -25,7 +25,9 @@ public:
         : io_context(io_context), acceptor_(io_context, tcp::endpoint(tcp::v4(), port)),
           thread_pool_(ThreadPool::GetInstance(numThread))
     {
-        HttpdLog::Info("Httpd Service Start");
+        HttpdLog::split_line();
+        HttpdLog::Info("Httpd服务启动");
+        HttpdLog::Info("版本: v1.0");
         start_accept();
     }
     HttpServer(const HttpServer &) = delete;
@@ -35,13 +37,14 @@ public:
     // 等待异步请求
     void run()
     {
-        HttpdLog::Info("Wait For Asynchronous Request");
+        HttpdLog::Info("等待异步请求");
+        HttpdLog::split_line();
         io_context.run();
     }
     // 绑定路由
     void router(Router &router)
     {
-        HttpdLog::Info("Bind Route");
+        HttpdLog::Info("绑定路由");
         servlet_ = std::make_shared<DispatcherServlet>(router, *this);
     }
     void router(std::initializer_list<std::pair<std::string, HttpServlet *>> list)
@@ -55,15 +58,16 @@ public:
                   const std::string &password, const std::string &database,
                   unsigned int port = 33060, unsigned int pool_size = 128)
     {
-        HttpdLog::Info("Bind Database");
+        HttpdLog::Info("绑定数据库");
         conn_pool = std::make_shared<ConnectionPool>(host, user, password, database, port, pool_size);
     }
     std::shared_ptr<ConnectionPool> getConnPool()
     {
         return conn_pool;
     }
-    
-    Timer getTimer(int max_count = 1){
+
+    Timer getTimer(int max_count = 1)
+    {
         return Timer(max_count);
     }
 
@@ -71,10 +75,17 @@ private:
     // 监听请求
     void start_accept()
     {
-        HttpdLog::Info("Listen Request");
-        auto socket = std::make_shared<tcp::socket>(io_context);
-        acceptor_.async_accept(*socket, boost::bind(&HttpServer::accept_handler,
-                                                    this, boost::asio::placeholders::error, socket));
+        try
+        {
+            HttpdLog::Info("监听请求");
+            auto socket = std::make_shared<tcp::socket>(io_context);
+            acceptor_.async_accept(*socket, boost::bind(&HttpServer::accept_handler,
+                                                        this, boost::asio::placeholders::error, socket));
+        }
+        catch (...)
+        {
+            handle_excepiton(std::current_exception());
+        }
     }
     // 处理函数，
     void accept_handler(const boost::system::error_code &ec, std::shared_ptr<tcp::socket> sock)
@@ -83,7 +94,7 @@ private:
         {
             return;
         }
-
+        HttpdLog::Info("创建Session");
         thread_pool_.Enqueue([=]()
                              {
                                 try{

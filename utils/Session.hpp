@@ -43,7 +43,6 @@ public:
     // 启动一个会话
     void start()
     {
-        HttpdLog::Info("Start Session");
         while (true)
         {
             if (!data_flag)
@@ -64,6 +63,7 @@ public:
     void read(const boost::system::error_code &error,
               size_t bytes_transferred)
     {
+        HttpdLog::Info("读取Header");
         auto self(shared_from_this());
         if (error)
             return;
@@ -73,7 +73,7 @@ public:
         if (-1 != index)
         {
             // 分发请求
-            HttpdLog::Info("Distribution Request");
+            HttpdLog::Info("分发请求");
             data_flag = false;
             this->request = parse_request_header(request_str);
             this->response = std::make_shared<HttpResponse>(this->socket_);

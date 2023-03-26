@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <mysqlx/xdevapi.h>
+#include "utils.hpp"
 
 namespace httpd
 {
@@ -34,6 +36,9 @@ namespace httpd
         {
             std::cerr << "ERROR: >\n"
                       << msg << std::endl;
+        }
+        static void split_line(){
+            std::cout << "===============================" << std::endl;
         }
 
         HttpdLog(const std::string &s) : _filename(s) {}

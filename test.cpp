@@ -13,6 +13,7 @@ int main()
         {"/assets", new AssetServlet(server)},
         {"/users", new UsersServlet(server)},
         {"/addUser", new AddUserServlet(server)},
+        {"/updateUser", new UpdateUser(server)},
         {"/deleteUser", new DeleteUserServlet(server)},
         {"/addAsset", new AddAssetServlet(server)},
         {"/deleteAsset", new DeleteAssetServlet(server)},
@@ -22,6 +23,8 @@ int main()
         {"/updateType", new UpdateTypeServlet(server)},
         {"/updateCode", new UpdateCodeServlet(server)},
         {"/Types", new TypeServlet(server)},
+        {"/Logout", new LogoutServlet(server)},
+        {"/savelog", new SaveLog(server)},
     };
     server.router(router);
     server.database("localhost", "root", "Czy010207...", "assets");

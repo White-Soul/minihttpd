@@ -66,6 +66,7 @@ void ThreadPool::Init(size_t numThreads)
     {
         threads_.emplace_back([this]
                               {
+            try{           
                 for (;;) {
                     std::function<void()> task;
 
@@ -77,13 +78,11 @@ void ThreadPool::Init(size_t numThreads)
                         task = std::move(this->tasks_.front());
                         this->tasks_.pop();
                     }
-                    try{
                         task();
-                    }catch(...){
-                        handle_excepiton(std::current_exception());
-                    }
-                   
-                } });
+                } 
+            }catch(...){
+                handle_excepiton(std::current_exception());
+            }});
     }
 }
 

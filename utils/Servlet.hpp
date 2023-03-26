@@ -34,8 +34,8 @@ void DispatcherServlet::destroy()
 
 void DispatcherServlet::doGet(HttpServletRequest &request, HttpServletResponse &response)
 {
-    HttpdLog::Info("Forward GET");
     std::string path = request.get_path();
+    HttpdLog::Info("转发 GET: " + path);
     if (router_.count(path) == 0)
     {
         response.set_body("Not Found");
@@ -49,8 +49,8 @@ void DispatcherServlet::doGet(HttpServletRequest &request, HttpServletResponse &
 
 void DispatcherServlet::doPost(HttpServletRequest &request, HttpServletResponse &response)
 {
-    HttpdLog::Info("Forward POST");
     std::string path = request.get_path();
+    HttpdLog::Info("转发 POST: " + path);
     if (router_.count(path) == 0)
     {
         response.set_body("Not Found");

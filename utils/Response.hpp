@@ -101,7 +101,7 @@ public:
     }
     void set_authorization(std::string &str) override
     {
-        add_header("Authorization: " + str);
+        add_header("Authorization: Bearer " + str);
     }
 };
 

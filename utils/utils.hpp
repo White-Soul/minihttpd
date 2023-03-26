@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <sstream>
+#include <ctime>
 #include <vector>
 #include <mysqlx/xdevapi.h>
 #include <boost/json.hpp>
@@ -270,6 +271,9 @@ std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &requ
             std::string header_name = header.substr(0, delimiter_pos);
             std::string header_value = header.substr(delimiter_pos + 1);
             boost::algorithm::trim(header_value);
+            if(header_name == "Authorization"){
+                header_value = header.substr(delimiter_pos + 9);
+            }
             request->add_header(header_name, header_value);
         }
     }
@@ -346,12 +350,12 @@ std::string generate_token()
     return token;
 }
 // 保存token,
-void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token)
+void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token, std::string account)
 {
     try
     {
-        std::string sql = "insert into token(token) values(?)";
-        conn->sql(sql).bind(token).execute();
+        std::string sql = "insert into token(token, account) values(?,?)";
+        conn->sql(sql).bind(token, account).execute();
     }
     catch (const mysqlx::Error &e)
     {
@@ -404,6 +408,16 @@ void handle_excepiton(std::exception_ptr eptr)
     {
         HttpdLog::Error(e.what());
     }
+}
+// 获取当前时间 yyyy-MM-dd HH:mm:ss
+std::string LocalTime(std::string format){
+    time_t now;
+    struct tm*p;
+    time(&now);
+    p = localtime(&now);
+    char time[256];
+    strftime(time, sizeof(time), format.c_str(), p);
+    return time;
 }
 
 _HTTPD_END_
