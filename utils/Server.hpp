@@ -98,7 +98,7 @@ private:
         thread_pool_.Enqueue([=]()
                              {
                                 try{
-                                     boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
+                                    boost::shared_ptr<HttpSession> session(new HttpSession(sock, servlet_));
                                     session->start();
                                 }catch(...){
                                     handle_excepiton(std::current_exception());

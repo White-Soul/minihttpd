@@ -43,20 +43,13 @@ public:
     // 启动一个会话
     void start()
     {
-        while (true)
+        if (!data_flag)
         {
-            if (!data_flag)
-            {
-                data_flag = true;
-                auto self(shared_from_this());
-                socket_->async_read_some(boost::asio::buffer(buffer),
-                                         boost::bind(&HttpSession::read, self,
-                                                     boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-            }
-            else
-            {
-                break;
-            }
+            data_flag = true;
+            auto self(shared_from_this());
+            socket_->async_read_some(boost::asio::buffer(buffer),
+                                     boost::bind(&HttpSession::read, self,
+                                                 boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
         }
     }
     // 读取请求头
@@ -74,15 +67,18 @@ public:
         {
             // 分发请求
             HttpdLog::Info("分发请求");
-            data_flag = false;
             this->request = parse_request_header(request_str);
             this->response = std::make_shared<HttpResponse>(this->socket_);
             dispatcher_->service(*request, *response, self);
+            data_flag = false;
             return;
         }
-        socket_->async_read_some(boost::asio::buffer(buffer),
-                                 boost::bind(&HttpSession::read, self,
-                                             boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        else
+        {
+            socket_->async_read_some(boost::asio::buffer(buffer),
+                                     boost::bind(&HttpSession::read, self,
+                                                 boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        }
     }
     // 获取sessionid
     std::string getId()
@@ -108,7 +104,8 @@ public:
     {
         attributes_.erase(key);
     }
-    ~HttpSession(){
+    ~HttpSession()
+    {
     }
 };
 

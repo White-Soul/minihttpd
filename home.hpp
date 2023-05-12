@@ -287,8 +287,7 @@ public:
             auto body = request.get_body();
             User u = json_to_obj<User>(body);
             u.name = u.account;
-
-            std::string sql = "Insert into user(name, account, password) values('?','?','?')";
+            std::string sql = "Insert into user(name, account, password) values(?,?,?)";
             Result res;
             try
             {

@@ -271,7 +271,8 @@ std::shared_ptr<HttpServletRequest> parse_request_header(const std::string &requ
             std::string header_name = header.substr(0, delimiter_pos);
             std::string header_value = header.substr(delimiter_pos + 1);
             boost::algorithm::trim(header_value);
-            if(header_name == "Authorization"){
+            if (header_name == "Authorization")
+            {
                 header_value = header.substr(delimiter_pos + 9);
             }
             request->add_header(header_name, header_value);
@@ -350,7 +351,7 @@ std::string generate_token()
     return token;
 }
 // 保存token,
-void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token, std::string account)
+void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::string &token, std::string account)
 {
     try
     {
@@ -363,12 +364,17 @@ void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::strin
     }
 }
 // 移除token
-void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string &token)
+void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::string &token)
 {
     try
     {
-        std::string sql = "delete from token where token = ?";
-        conn->sql(sql).bind(token).execute();
+        std::string sql = " select token from token where token = ? ";
+        auto res = conn->sql(sql).bind(token).execute();
+        if (res.count() != 0)
+        {
+            sql = "delete from token where token = ?";
+            conn->sql(sql).bind(token).execute();
+        }
     }
     catch (const mysqlx::Error &e)
     {
@@ -376,7 +382,7 @@ void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::str
     }
 }
 // 查询token是否过期
-bool get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn,const std::string & token)
+bool get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::string &token)
 {
     try
     {
@@ -410,9 +416,10 @@ void handle_excepiton(std::exception_ptr eptr)
     }
 }
 // 获取当前时间 yyyy-MM-dd HH:mm:ss
-std::string LocalTime(std::string format){
+std::string LocalTime(std::string format)
+{
     time_t now;
-    struct tm*p;
+    struct tm *p;
     time(&now);
     p = localtime(&now);
     char time[256];
