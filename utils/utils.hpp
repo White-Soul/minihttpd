@@ -37,21 +37,16 @@ std::string rowResult_to_json(mysqlx::RowResult &result)
     for (auto row : result.fetchAll())
     {
         boost::json::object obj;
-
         for (int i = 0; i < row.colCount(); ++i)
         {
             obj[std::string(result.getColumn(i).getColumnName())] = value_to_string(row.get(i));
         }
-
         rows.push_back(std::move(obj));
     }
-
     // Convert the array of rows to a JSON value
     boost::json::value val = rows;
-
     // Serialize the value to a JSON string
     std::string json_str = boost::json::serialize(val);
-
     // Print the JSON string
     return json_str;
 }
@@ -360,7 +355,7 @@ void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::stri
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what());
+        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
     }
 }
 // 移除token
@@ -378,7 +373,7 @@ void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::st
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what());
+        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
     }
 }
 // 查询token是否过期
@@ -396,7 +391,7 @@ bool get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::strin
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what());
+        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
     }
     return false;
 }
@@ -412,7 +407,7 @@ void handle_excepiton(std::exception_ptr eptr)
     }
     catch (const std::exception &e)
     {
-        HttpdLog::Error(e.what());
+        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
     }
 }
 // 获取当前时间 yyyy-MM-dd HH:mm:ss

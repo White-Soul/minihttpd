@@ -14,6 +14,7 @@
 #include "mysqlconn.hpp"
 #include "Servlet.hpp"
 #include "Timer.hpp"
+#include "def.h"
 _HTTPD_BEGIN_
 
 // 服务器类
@@ -26,8 +27,8 @@ public:
           thread_pool_(ThreadPool::GetInstance(numThread))
     {
         HttpdLog::split_line();
-        HttpdLog::Info("Httpd服务启动");
-        HttpdLog::Info("版本: v1.0");
+        std::printf("Httpd服务启动");
+        std::printf("版本: %s", VERSION);
         start_accept();
     }
     HttpServer(const HttpServer &) = delete;
@@ -37,14 +38,14 @@ public:
     // 等待异步请求
     void run()
     {
-        HttpdLog::Info("等待异步请求");
+        HttpdLog::Info("等待异步请求", (char*)__FUNCTIONW__);
         HttpdLog::split_line();
         io_context.run();
     }
     // 绑定路由
     void router(Router &router)
     {
-        HttpdLog::Info("绑定路由");
+        HttpdLog::Info("绑定路由", (char*)__FUNCTIONW__);
         servlet_ = std::make_shared<DispatcherServlet>(router, *this);
     }
     void router(std::initializer_list<std::pair<std::string, HttpServlet *>> list)
@@ -58,7 +59,7 @@ public:
                   const std::string &password, const std::string &database,
                   unsigned int port = 33060, unsigned int pool_size = 128)
     {
-        HttpdLog::Info("绑定数据库");
+        HttpdLog::Info("绑定数据库", (char*)__FUNCTIONW__);
         conn_pool = std::make_shared<ConnectionPool>(host, user, password, database, port, pool_size);
     }
     std::shared_ptr<ConnectionPool> getConnPool()
@@ -77,7 +78,7 @@ private:
     {
         try
         {
-            HttpdLog::Info("监听请求");
+            HttpdLog::Info("监听请求", (char*)__FUNCTIONW__);
             auto socket = std::make_shared<tcp::socket>(io_context);
             acceptor_.async_accept(*socket, boost::bind(&HttpServer::accept_handler,
                                                         this, boost::asio::placeholders::error, socket));
@@ -94,7 +95,7 @@ private:
         {
             return;
         }
-        HttpdLog::Info("创建Session");
+        HttpdLog::Info("创建Session", (char*)__FUNCTIONW__);
         thread_pool_.Enqueue([=]()
                              {
                                 try{

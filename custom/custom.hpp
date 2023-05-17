@@ -55,6 +55,20 @@ public:
         u.wchat = getPtreeNode<std::string>(tree, "wchat");
         return u;
     }
+
+    std::string toString() const {
+        std::string str = "";
+        str+= "name="+name+", "; 
+        str+= "account="+account+", ";
+        str+= "passwrod="+password+", ";
+        str+= "email="+email+", ";
+        str+= "phone="+phone+", ";
+        str+= "address="+address+", ";
+        str+= "qq="+qq+", ";
+        str+= "wchat="+wchat+", ";
+        str+= "isRoot="+std::to_string(isRoot)+"; ";
+        return str;
+    }
 };
 
 class Asset : public Custom<Asset>
@@ -102,6 +116,17 @@ public:
         u.user_account = getPtreeNode<std::string>(tree, "user_account");
         return u;
     }
+    std::string toString() const {
+        std::string str = "";
+        str+= "code="+code+", "; 
+        str+= "name="+name+", ";
+        str+= "desc="+desc+", ";
+        str+= "amount="+std::to_string(amount)+", ";
+        str+= "money="+std::to_string(money)+", ";
+        str+= "type_id="+type_id+", ";
+        str+= "user_account="+user_account+"; ";
+        return str;
+    }
 };
 
 class Type : public Custom<Type>
@@ -129,10 +154,16 @@ public:
         boost::property_tree::ptree tree;
         std::istringstream ss(json);
         boost::property_tree::read_json(ss, tree);
-        u.id = getPtreeNode<int>(tree, "id");
+        u.id = getPtreeNode<std::string>(tree, "id");
         u.type_name = getPtreeNode<std::string>(tree, "id");
 
         return u;
+    }
+    std::string toString() const {
+        std::string str = "";
+        str+= "id="+id+", "; 
+        str+= "type_name="+type_name+"; ";
+        return str;
     }
 };
 
@@ -166,5 +197,11 @@ public:
         u.date = getPtreeNode<std::string>(tree, "date");
 
         return u;
+    }
+    std::string toString() const {
+        std::string str = "";
+        str+= "message="+message+", "; 
+        str+= "date="+date+"; ";
+        return str;
     }
 };

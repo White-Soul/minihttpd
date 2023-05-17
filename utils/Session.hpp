@@ -56,7 +56,7 @@ public:
     void read(const boost::system::error_code &error,
               size_t bytes_transferred)
     {
-        HttpdLog::Info("读取Header");
+        HttpdLog::Info("读取Header", (char*)__FUNCTIONW__);
         auto self(shared_from_this());
         if (error)
             return;
@@ -66,7 +66,6 @@ public:
         if (-1 != index)
         {
             // 分发请求
-            HttpdLog::Info("分发请求");
             this->request = parse_request_header(request_str);
             this->response = std::make_shared<HttpResponse>(this->socket_);
             dispatcher_->service(*request, *response, self);

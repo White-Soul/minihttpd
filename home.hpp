@@ -46,7 +46,7 @@ public:
         {
             res.set_Result_Code(Result_Code::ERROR_);
             res.set_Message("数据库异常");
-            std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
         }
         response.set_body(result_to_json(res));
         get_server().getConnPool()->releaseConnection(conn);
@@ -122,7 +122,7 @@ public:
         {
             res.set_Result_Code(Result_Code::ERROR_);
             res.set_Message("SQL执行错误");
-            std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
         }
         response.set_body(result_to_json(res));
         get_server().getConnPool()->releaseConnection(conn);
@@ -166,7 +166,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("SQL执行错误");
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
             }
 
             get_server().getConnPool()->releaseConnection(conn);
@@ -207,7 +207,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("SQL执行错误");
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
             }
             response.add_body(result_to_json(res));
             response.set_status_code(HttpServletResponse::OK);
@@ -255,7 +255,7 @@ public:
             }
             catch (const mysqlx::Error &e)
             {
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("请求失败");
             }
@@ -297,9 +297,9 @@ public:
             }
             catch (const mysqlx::Error &e)
             {
-                res.set_Message("插入失败");
+                res.set_Message("插入失败,用户或密码有错误");
                 res.set_Result_Code(Result_Code::ERROR_);
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
@@ -338,7 +338,7 @@ public:
             {
                 res.set_Message("删除失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                std::cerr << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
@@ -405,12 +405,20 @@ public:
             auto body = request.get_body();
             Asset asset = json_to_obj<Asset>(body);
             asset.code = getUUID();
-            std::string sql = "insert into asset(money, amount, name, desc, code, type_id, user_account) values (?,?,?,?,?,?,?);";
+            bool flag = asset.desc == "" ? true : false;
+            std::string sql;
+            if(flag)
+                sql = "insert into asset(money, amount, name, desc, code, type_id, user_account) values (?,?,?,?,?,?,?)";
+            else
+                sql = "insert into asset(money, amount, name, code, type_id, user_account) values (?,?,?,?,?,?)";
 
             Result res;
             try
             {
-                conn->sql(sql).bind(asset.money, asset.amount, asset.name, asset.desc, asset.code, asset.type_id, asset.user_account).execute();
+                if(flag)
+                    conn->sql(sql).bind(asset.money, asset.amount, asset.name, asset.code, asset.type_id, asset.user_account).execute();
+                else
+                    conn->sql(sql).bind(asset.money, asset.amount, asset.name, asset.desc, asset.code, asset.type_id, asset.user_account).execute();
                 res.set_Result_Code(Result_Code::OK_);
                 res.set_Message("入库成功");
             }
@@ -418,7 +426,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("入库失败");
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -458,7 +466,7 @@ public:
             {
                 res.set_Message("删除失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                std::cout << "SQL ERROR: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(std::string(e.what())), (char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -510,7 +518,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("更新失败");
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                HttpdLog::Error("Failed to execute SQL statement: " + std::string(std::string(e.what())), (char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -551,7 +559,7 @@ public:
             }
             catch (const mysqlx::Error &e)
             {
-                std::cerr << "SQL Error: " << e.what() << std::endl;
+                std::cerr << "SQL Error: " << std::string(e.what()) << std::endl;
                 res.set_Message("更新失败");
                 res.set_Result_Code(Result_Code::ERROR_);
             }
@@ -577,7 +585,7 @@ public:
         if (get_token(conn, request.get_authorization()))
         {
             Result res;
-            std::string sql = "";
+            std::string sql = "select * from log";
             try
             {
                 auto result = conn->sql(sql).execute();
@@ -589,7 +597,7 @@ public:
             {
                 res.set_Message("查询失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                HttpdLog::Error(e.what());
+                HttpdLog::Error(std::string(e.what()),(char*)__FUNCTIONW__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_body(result_to_json(res));
@@ -637,7 +645,7 @@ public:
             {
                 res.set_Message("更新类型失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                std::cerr << e.what() << std::endl;
+                std::cerr << std::string(e.what()) << std::endl;
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -657,9 +665,6 @@ class UpdateCodeServlet : public HttpServlet
 public:
     void doGet(HttpServletRequest &request, HttpServletResponse &response)
     {
-    }
-    void doPost(HttpServletRequest &request, HttpServletResponse &response)
-    {
         auto conn = get_server().getConnPool()->getConnection();
         if (get_token(conn, request.get_authorization()))
         {
@@ -677,7 +682,7 @@ public:
             }
             catch (const mysqlx::Error &e)
             {
-                std::cerr << "SQL Error: " << e.what() << std::endl;
+                std::cerr << "SQL Error: " << std::string(e.what()) << std::endl;
                 res.set_Message("Code更新失败");
                 res.set_Result_Code(Result_Code::ERROR_);
             }
@@ -690,6 +695,10 @@ public:
         }
         response.set_content_type("text/html");
         response.send();
+    }
+    void doPost(HttpServletRequest &request, HttpServletResponse &response)
+    {
+        
     }
     UpdateCodeServlet(HttpServer &ser) : HttpServlet(ser) {}
 };
@@ -718,7 +727,7 @@ public:
             {
                 result.set_Result_Code(Result_Code::ERROR_);
                 result.set_Message("请求失败");
-                std::cerr << "Failed to execute SQL statement: " << e.what() << std::endl;
+                std::cerr << "Failed to execute SQL statement: " << std::string(e.what()) << std::endl;
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -751,9 +760,11 @@ public:
         auto conn = get_server().getConnPool()->getConnection();
         try
         {
-            std::string sql = "insert into log(message, data) values(?,?)";
+            std::string sql = "insert into log(message, date) values(?,?)";
             auto log = req.get_body();
-            conn->sql(sql).bind(log, LocalTime("%F")).execute();
+            Log l = json_to_obj<Log>(log);
+            //LocalTime("%F")
+            conn->sql(sql).bind(l.message, l.date).execute();
         }
         catch (...)
         {

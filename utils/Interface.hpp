@@ -109,6 +109,7 @@ public:
     virtual void doPost(HttpServletRequest &request, HttpServletResponse &response) = 0;
     void service(HttpServletRequest &request, HttpServletResponse &response, boost::shared_ptr<HttpSession> s)
     {
+        HttpdLog::Info("分发请求", (char*)__FUNCTIONW__);
         session_ = s;
         response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
         response.set_header("Access-Control-Allow-Credentials", "true");
@@ -137,6 +138,7 @@ class Custom
     virtual std::string serialize() const = 0;
     static T deserialize(const std::string &json){};
     std::string getId() const { return ""; };
+    virtual std::string toString() const = 0;
 };
 
 _HTTPD_END_
