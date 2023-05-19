@@ -109,7 +109,7 @@ public:
     virtual void doPost(HttpServletRequest &request, HttpServletResponse &response) = 0;
     void service(HttpServletRequest &request, HttpServletResponse &response, boost::shared_ptr<HttpSession> s)
     {
-        HttpdLog::Info("分发请求", (char*)__FUNCTIONW__);
+        HttpdLog::Info("分发请求", (char*)__func__);
         session_ = s;
         response.set_header("Access-Control-Allow-Origin", request.get_header("Origin"));
         response.set_header("Access-Control-Allow-Credentials", "true");
