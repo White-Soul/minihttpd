@@ -17,27 +17,12 @@ namespace httpd
             auto m = boost::format("[INFO] [%2%] %1% \n") % msg % func;
             std::printf(m.str().c_str());
         }
-        static void Info(const std::wstring &msg, const std::wstring &func)
-        {
-            auto m = boost::format("[INFO] [%2%] %1% \n") % msg % func;
-            std::printf(m.str().c_str());
-        }
-        static void Warn(const std::string msg, const std::string func)
+        static void Warn(const std::string& msg, const std::string& func)
         {
             auto m = boost::format("[WARN] [%2%] %1% \n") % msg % func;
             std::printf(m.str().c_str());
         }
-        static void Warn(const std::wstring msg, const std::wstring func)
-        {
-            auto m = boost::format("[WARN] [%2%] %1% \n") % msg % func;
-            std::printf(m.str().c_str());
-        }
-        static void Error(const std::string msg, const std::string func)
-        {
-            auto m = boost::format("[WARN] [%2%] %1% \n") % msg % func;
-            std::printf(m.str().c_str());
-        }
-        static void Error(const std::wstring msg, const std::wstring func)
+        static void Error(const std::string& msg, const std::string &func)
         {
             auto m = boost::format("[WARN] [%2%] %1% \n") % msg % func;
             std::printf(m.str().c_str());
@@ -58,8 +43,9 @@ namespace httpd
         {
             auto m = boost::format("[WARN] [%2%] %1% \n") % msg % func;
             std::ofstream out(_filename, std::ofstream::app);
+            auto str = m.str();
             if (out.is_open())
-                out << m.str();
+                out << str;
         }
 
     private:
