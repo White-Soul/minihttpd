@@ -5,6 +5,7 @@
 #include <boost/asio.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include "Logs.hpp"
 #define _HTTPD_BEGIN_ \
     namespace httpd   \
     {
