@@ -4,6 +4,8 @@ project(httpd)
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 11)
+# 设置 _ROOT变量被忽略了，如果不想忽略需要使用cmake_policy指令设置变量CMP0074
+cmake_policy(SET CMP0074 NEW) 
 
 # 添加源文件
 set(SOURCES
