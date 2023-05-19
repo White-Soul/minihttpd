@@ -46,7 +46,7 @@ public:
         {
             res.set_Result_Code(Result_Code::ERROR_);
             res.set_Message("数据库异常");
-            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
         }
         response.set_body(result_to_json(res));
         get_server().getConnPool()->releaseConnection(conn);
@@ -122,7 +122,7 @@ public:
         {
             res.set_Result_Code(Result_Code::ERROR_);
             res.set_Message("SQL执行错误");
-            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+            HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
         }
         response.set_body(result_to_json(res));
         get_server().getConnPool()->releaseConnection(conn);
@@ -166,7 +166,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("SQL执行错误");
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
             }
 
             get_server().getConnPool()->releaseConnection(conn);
@@ -207,7 +207,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("SQL执行错误");
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
             }
             response.add_body(result_to_json(res));
             response.set_status_code(HttpServletResponse::OK);
@@ -255,7 +255,7 @@ public:
             }
             catch (const mysqlx::Error &e)
             {
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("请求失败");
             }
@@ -299,7 +299,7 @@ public:
             {
                 res.set_Message("插入失败,用户或密码有错误");
                 res.set_Result_Code(Result_Code::ERROR_);
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
@@ -338,7 +338,7 @@ public:
             {
                 res.set_Message("删除失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.add_body(result_to_json(res));
@@ -426,7 +426,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("入库失败");
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(e.what()), (char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -466,7 +466,7 @@ public:
             {
                 res.set_Message("删除失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                HttpdLog::Error("Failed to execute SQL statement: "+std::string(std::string(e.what())), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: "+std::string(std::string(e.what())), (char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -518,7 +518,7 @@ public:
             {
                 res.set_Result_Code(Result_Code::ERROR_);
                 res.set_Message("更新失败");
-                HttpdLog::Error("Failed to execute SQL statement: " + std::string(std::string(e.what())), (char*)__FUNCTIONW__);
+                HttpdLog::Error("Failed to execute SQL statement: " + std::string(std::string(e.what())), (char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_status_code(HttpServletResponse::OK);
@@ -597,7 +597,7 @@ public:
             {
                 res.set_Message("查询失败");
                 res.set_Result_Code(Result_Code::ERROR_);
-                HttpdLog::Error(std::string(e.what()),(char*)__FUNCTIONW__);
+                HttpdLog::Error(std::string(e.what()),(char*)__func__);
             }
             get_server().getConnPool()->releaseConnection(conn);
             response.set_body(result_to_json(res));

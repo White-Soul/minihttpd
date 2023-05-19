@@ -355,7 +355,7 @@ void save_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::stri
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
+        HttpdLog::Error(e.what(), (char *)__func__);
     }
 }
 // 移除token
@@ -373,7 +373,7 @@ void delete_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::st
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
+        HttpdLog::Error(e.what(), (char *)__func__);
     }
 }
 // 查询token是否过期
@@ -391,7 +391,7 @@ bool get_token(std::shared_ptr<mysqlx::abi2::r0::Session> conn, const std::strin
     }
     catch (const mysqlx::Error &e)
     {
-        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
+        HttpdLog::Error(e.what(), (char *)__func__);
     }
     return false;
 }
@@ -407,7 +407,7 @@ void handle_excepiton(std::exception_ptr eptr)
     }
     catch (const std::exception &e)
     {
-        HttpdLog::Error(e.what(), (char *)__FUNCTIONW__);
+        HttpdLog::Error(e.what(), (char *)__func__);
     }
 }
 // 获取当前时间 yyyy-MM-dd HH:mm:ss

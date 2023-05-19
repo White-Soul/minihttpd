@@ -19,7 +19,7 @@ set(MYSQL_CONN_CPP_INCLUDE_DIR /usr/include/mysql-cppconn-8)
 set(MYSQL_CONN_CPP_LIBRARY_DIR /usr/lib64)
 
 # 添加 Boost 库的版本号到路径中
-find_package(BOOST COMPONENTS system REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
 
 MESSAGE( STATUS "Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
 MESSAGE( STATUS "Boost_LIBRARY_DIRS = ${Boost_LIBRARY_DIRS}")

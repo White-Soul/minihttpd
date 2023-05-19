@@ -56,7 +56,7 @@ public:
     void read(const boost::system::error_code &error,
               size_t bytes_transferred)
     {
-        HttpdLog::Info("读取Header", (char*)__FUNCTIONW__);
+        HttpdLog::Info("读取Header", (char*)__func__);
         auto self(shared_from_this());
         if (error)
             return;
