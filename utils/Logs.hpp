@@ -4,7 +4,6 @@
 #include <fstream>
 #include <string>
 #include <mysqlx/xdevapi.h>
-#include "utils.hpp"
 #include <boost/format.hpp>
 #include "def.h"
 
